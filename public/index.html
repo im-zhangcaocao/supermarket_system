@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家电超市管理系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1>家电小型超市管理系统</h1>
+        <nav>
+            <a href="#">首页</a>
+            <a href="#">库存管理</a>
+            <a href="#">销售管理</a>
+            <a href="#">采购管理</a>
+            <a href="#">用户中心</a>
+        </nav>
+    </header>
+    <main>
+        <section>
+            <h2>产品列表</h2>
+            <div id="product-list"></div>
+        </section>
+        <section>
+            <h2>添加新产品</h2>
+            <form id="add-product-form">
+                <input type="text" id="name" placeholder="产品名称" required>
+                <input type="number" id="price" placeholder="价格" step="0.01" required>
+                <input type="number" id="stock" placeholder="库存数量" required>
+                <button type="submit">添加产品</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>© 2025 家电超市管理系统开发小组</p>
+    </footer>
+    <script src="js/main.js"></script>
+</body>
+</html>
