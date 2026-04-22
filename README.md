@@ -1,3 +1,21 @@
+每次修改文件前请先在根目录执行git pull拉取最新项目文件
+在最新文件中进行修改
+修改完成后执行git add .添加所有文件
+
+# 1. 查看文件状态
+git status
+
+# 2. 如果显示绿色文件（已暂存），则先提交
+git commit -m "描述修改内容"
+运行git log可查看项目修改日志
+
+# 3. 拉取远程更新并合并
+git pull 
+
+# 4. 如果有冲突，解决后执行 git add 和 git commit
+# 5. 推送
+
+git push
 supermarket-system/                 # 项目根目录
 │
 ├── backend/                        # 后端代码（Node.js + Express）
