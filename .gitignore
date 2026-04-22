@@ -1,6 +1,6 @@
 # 依赖目录
 node_modules/
-
+node
 
 # 数据库文件（可选，如果希望保留初始数据可以不忽略，但通常忽略）
 supermarket.db
