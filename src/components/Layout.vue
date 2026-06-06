@@ -11,35 +11,35 @@
         class="sidebar-menu"
         mode="vertical"
       >
-        <el-menu-item index="/inventory">
+        <el-menu-item index="/dashboard/inventory">
           <span>库存管理</span>
         </el-menu-item>
         
-        <el-menu-item index="/sales" v-if="canAccessSales">
+        <el-menu-item index="/dashboard/sales" v-if="canAccessSales">
           <span>销售管理</span>
         </el-menu-item>
         
-        <el-menu-item index="/purchase" v-if="canAccessPurchase">
+        <el-menu-item index="/dashboard/purchase" v-if="canAccessPurchase">
           <span>采购管理</span>
         </el-menu-item>
         
-        <el-menu-item index="/users" v-if="canAccessUsers">
+        <el-menu-item index="/dashboard/users" v-if="canAccessUsers">
           <span>客户管理</span>
         </el-menu-item>
         
-        <el-menu-item index="/employees" v-if="canAccessEmployees">
+        <el-menu-item index="/dashboard/employees" v-if="canAccessEmployees">
           <span>员工管理</span>
         </el-menu-item>
         
-        <el-menu-item index="/finance" v-if="canAccessFinance">
+        <el-menu-item index="/dashboard/finance" v-if="canAccessFinance">
           <span>财务管理</span>
         </el-menu-item>
         
-        <el-menu-item index="/stats" v-if="canAccessStats">
+        <el-menu-item index="/dashboard/stats" v-if="canAccessStats">
           <span>统计报表</span>
         </el-menu-item>
         
-        <el-menu-item index="/database" v-if="canAccessDatabase">
+        <el-menu-item index="/dashboard/database" v-if="canAccessDatabase">
           <span>数据管理</span>
         </el-menu-item>
       </el-menu>
@@ -56,6 +56,11 @@
             <span class="user-name">{{ userStore.userInfo?.username }}</span>
             <span class="user-role">({{ roleText }})</span>
           </div>
+          <router-link to="/dashboard/profile" class="profile-link">
+            <el-button type="text" class="profile-btn">
+              个人信息
+            </el-button>
+          </router-link>
           <el-button
             type="text"
             class="logout-btn"

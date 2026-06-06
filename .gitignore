@@ -1,18 +1,85 @@
 # 依赖目录
 node_modules/
-node
 
-# 数据库文件（可选，如果希望保留初始数据可以不忽略，但通常忽略）
-supermarket.db
-*.db
+# 构建产物
+dist/
+build/
+*.build.js
+
+# 数据库文件（保留主数据库文件，忽略临时/备份数据库）
+# *.db  # 已取消忽略，以便保留持续数据
+# instance/  # 已取消忽略
 
 # 操作系统文件
 .DS_Store
 Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
 
 # IDE 配置
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# 日志
+# 编辑器临时文件
+*.tmp
+*.bak
+*.backup
+
+# 日志文件
 *.log
+logs/
+
+# 环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python 编译产物
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Flask 实例文件
+instance/
+.flaskenv
+
+# 缓存文件
+.cache/
+.parcel-cache/
+
+# 临时目录
+temp/
+tmp/
+
+# 编辑器备份
+*.orig
+*.rej
+
+# npm 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript 编译
+*.tsbuildinfo
+
+# ESLint 缓存
+.eslintcache
+
+# 测试覆盖率
+coverage/
+
+# 打包文件
+*.tar.gz
+*.zip

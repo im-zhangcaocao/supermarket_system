@@ -142,7 +142,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
-import { generateSalesReport, getOrderHistory } from '../api/mockApi';
+import { generateSalesReport, getOrderHistory } from '../api/realApi';
 import { exportSalesReport } from '../utils/export';
 import eventBus from '../utils/eventBus';
 
@@ -204,7 +204,18 @@ const displayData = computed(() => {
 
 async function loadReport() {
   try {
-    const [start, end] = dateRange.value || [null, null];
+    let start, end;
+    if (dateRange.value && dateRange.value.length === 2) {
+      [start, end] = dateRange.value;
+    } else {
+      // 默认使用最近30天
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+      start = startDate.toISOString().split('T')[0];
+      end = endDate.toISOString().split('T')[0];
+    }
+    
     const result = await generateSalesReport(start, end, groupBy.value);
     
     chartData.dates = result.dates;

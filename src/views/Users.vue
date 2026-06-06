@@ -341,6 +341,7 @@
             ¥{{ row.total_amount.toFixed(2) }}
           </template>
         </el-table-column>
+        <el-table-column prop="remark" label="备注" min-width="150" />
         <el-table-column label="支付状态" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.payment_status)" size="small">
@@ -411,7 +412,7 @@ import {
   getOrderHistory,
   getOrderDetail as getOrderDetailApi,
   getCustomerPurchasePreference
-} from '../api/mockApi';
+} from '../api/realApi';
 
 const customers = ref([]);
 const orders = ref([]);

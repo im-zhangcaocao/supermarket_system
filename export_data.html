@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据导出工具 - 家电超市管理系统</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 30px;
+      margin-bottom: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .header h1 {
+      color: #303133;
+      margin-bottom: 10px;
+    }
+    
+    .header p {
+      color: #909399;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: #f5f7fa;
+      color: #606266;
+    }
+    
+    .btn-secondary:hover {
+      background: #e4e7ed;
+    }
+    
+    .btn-danger {
+      background: #f56c6c;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #ef4444;
+    }
+    
+    .data-info {
+      background: #f5f7fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .data-info h3 {
+      margin-bottom: 15px;
+      color: #303133;
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .table th, .table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ebeef5;
+    }
+    
+    .table th {
+      background: #fafafa;
+      font-weight: 600;
+      color: #606266;
+    }
+    
+    .table tr:hover {
+      background: #f5f7fa;
+    }
+    
+    .status {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+    }
+    
+    .status.success {
+      background: #e8f5e9;
+      color: #67c23a;
+    }
+    
+    .status.error {
+      background: #fef0f0;
+      color: #f56c6c;
+    }
+    
+    .status.warning {
+      background: #fdf6ec;
+      color: #e6a23c;
+    }
+    
+    .status.info {
+      background: #e6f7ff;
+      color: #1890ff;
+    }
+    
+    .log-area {
+      background: #1f1f1f;
+      color: #e0e0e0;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .modal-overlay.show {
+      display: flex;
+    }
+    
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+    }
+    
+    .modal h3 {
+      margin-bottom: 15px;
+    }
+    
+    .modal textarea {
+      width: 100%;
+      height: 200px;
+      padding: 15px;
+      border: 1px solid #dcdfe6;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      resize: none;
+    }
+    
+    .modal-actions {
+      margin-top: 20px;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #ebeef5;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+      text-align: center;
+      color: #909399;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <h1>📦 数据导出工具</h1>
+        <p>家电超市管理系统 - localStorage 数据导出</p>
+      </div>
+      
+      <div class="data-info" id="dataInfo" style="display: none;">
+        <h3>📊 数据概览</h3>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>数据表</th>
+              <th>记录数</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <button class="btn btn-primary" onclick="loadData()">📂 加载数据</button>
+        <button class="btn btn-secondary" onclick="exportData()">📥 导出数据</button>
+        <button class="btn btn-danger" onclick="clearData()" style="float: right;">🗑️ 清空数据</button>
+      </div>
+      
+      <div class="log-area" id="logArea">点击"加载数据"按钮开始...</div>
+    </div>
+    
+    <div class="card">
+      <h3>📋 使用说明</h3>
+      <ul style="padding-left: 20px; margin-top: 15px; line-height: 1.8;">
+        <li><strong>加载数据</strong>：读取浏览器 localStorage 中的所有数据并显示概览</li>
+        <li><strong>导出数据</strong>：将数据导出为 JSON 文件，用于迁移到后端数据库</li>
+        <li><strong>清空数据</strong>：清除 localStorage 中的所有数据（谨慎操作）</li>
+      </ul>
+      <p style="margin-top: 15px; color: #909399; font-size: 14px;">
+        💡 提示：导出的数据文件命名为 <code>localStorage_data.json</code>，需放置在项目根目录供迁移脚本使用
+      </p>
+    </div>
+  </div>
+  
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h3>数据预览</h3>
+      <textarea id="dataPreview" readonly></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+        <button class="btn btn-primary" onclick="downloadFile()">下载文件</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LOG_KEY = 'supermarket_db';
+    
+    function log(message, type = 'info') {
+      const logArea = document.getElementById('logArea');
+      const timestamp = new Date().toLocaleString('zh-CN');
+      let prefix = '[INFO]';
+      let color = '#e0e0e0';
+      
+      switch(type) {
+        case 'success':
+          prefix = '[SUCCESS]';
+          color = '#67c23a';
+          break;
+        case 'error':
+          prefix = '[ERROR]';
+          color = '#f56c6c';
+          break;
+        case 'warning':
+          prefix = '[WARNING]';
+          color = '#e6a23c';
+          break;
+      }
+      
+      logArea.innerHTML += `<span style="color: ${color};">${prefix}</span> [${timestamp}] ${message}\n`;
+      logArea.scrollTop = logArea.scrollHeight;
+    }
+    
+    function loadData() {
+      log('开始加载 localStorage 数据...');
+      
+      try {
+        const rawData = localStorage.getItem(LOG_KEY);
+        
+        if (!rawData) {
+          log('未找到 supermarket_db 数据', 'warning');
+          document.getElementById('dataInfo').style.display = 'none';
+          return;
+        }
+        
+        const data = JSON.parse(rawData);
+        log(`成功加载数据，包含 ${Object.keys(data).length} 个数据表`, 'success');
+        
+        displayDataInfo(data);
+        
+      } catch (error) {
+        log(`加载数据失败: ${error.message}`, 'error');
+      }
+    }
+    
+    function displayDataInfo(data) {
+      const tbody = document.getElementById('dataTableBody');
+      tbody.innerHTML = '';
+      
+      const tables = [
+        { key: 'users', label: '用户信息' },
+        { key: 'products', label: '产品信息' },
+        { key: 'suppliers', label: '供应商信息' },
+        { key: 'customers', label: '客户信息' },
+        { key: 'sales_orders', label: '销售订单' },
+        { key: 'sales_order_items', label: '销售订单项' },
+        { key: 'purchase_orders', label: '采购订单' },
+        { key: 'purchase_order_items', label: '采购订单项' },
+        { key: 'inventory_logs', label: '库存日志' },
+        { key: 'financial_records', label: '财务记录' }
+      ];
+      
+      let totalRecords = 0;
+      
+      tables.forEach(table => {
+        const records = data[table.key] || [];
+        const count = records.length;
+        totalRecords += count;
+        
+        let statusClass = 'success';
+        let statusText = '正常';
+        
+        if (count === 0) {
+          statusClass = 'info';
+          statusText = '空';
+        }
+        
+        tbody.innerHTML += `
+          <tr>
+            <td>${table.label}</td>
+            <td><strong>${count}</strong></td>
+            <td><span class="status ${statusClass}">${statusText}</span></td>
+          </tr>
+        `;
+      });
+      
+      tbody.innerHTML += `
+        <tr style="background: #fafafa;">
+          <td><strong>合计</strong></td>
+          <td><strong>${totalRecords}</strong></td>
+          <td><span class="status success">完整</span></td>
+        </tr>
+      `;
+      
+      document.getElementById('dataInfo').style.display = 'block';
+      log(`数据概览显示完成，共 ${totalRecords} 条记录`, 'success');
+    }
+    
+    function exportData() {
+      log('开始导出数据...');
+      
+      try {
+        const rawData = localStorage.getItem(LOG_KEY);
+        
+        if (!rawData) {
+          log('未找到数据，无法导出', 'error');
+          return;
+        }
+        
+        const data = JSON.parse(rawData);
+        const prettyData = JSON.stringify(data, null, 2);
+        
+        document.getElementById('dataPreview').value = prettyData;
+        document.getElementById('modal').classList.add('show');
+        
+        log('数据已准备好导出', 'success');
+        
+      } catch (error) {
+        log(`导出数据失败: ${error.message}`, 'error');
+      }
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.remove('show');
+    }
+    
+    function downloadFile() {
+      const data = document.getElementById('dataPreview').value;
+      
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'localStorage_data.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      closeModal();
+      log('数据文件已下载', 'success');
+    }
+    
+    function clearData() {
+      if (!confirm('确定要清空 localStorage 中的所有数据吗？此操作不可撤销！')) {
+        return;
+      }
+      
+      try {
+        localStorage.clear();
+        log('localStorage 数据已清空', 'warning');
+        document.getElementById('dataInfo').style.display = 'none';
+      } catch (error) {
+        log(`清空数据失败: ${error.message}`, 'error');
+      }
+    }
+    
+    log('数据导出工具已加载完毕');
+    log('请点击"加载数据"按钮查看 localStorage 中的数据');
+  </script>
+</body>
+</html>

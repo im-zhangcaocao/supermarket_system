@@ -6,7 +6,9 @@ export function exportToExcel(data, filename, columns) {
   }
 
   const ws = XLSX.utils.json_to_sheet(data, { 
-    header: columns.map(col => col.label)
+    header: columns.map(col => col.prop),
+    skipHeader: true,
+    origin: 'A2'
   });
 
   const columnWidths = columns.map((col, i) => {
@@ -21,6 +23,9 @@ export function exportToExcel(data, filename, columns) {
   });
 
   ws['!cols'] = columnWidths;
+
+  const headerRow = columns.map(col => col.label);
+  XLSX.utils.sheet_add_aoa(ws, [headerRow], { origin: 'A1' });
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');

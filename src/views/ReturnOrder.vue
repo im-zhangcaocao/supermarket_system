@@ -108,7 +108,7 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { getOrderDetail, returnOrder, getCustomers } from '../api/mockApi';
+import { getOrderDetail, returnOrder, getCustomers } from '../api/realApi';
 
 const route = useRoute();
 const router = useRouter();
@@ -159,7 +159,7 @@ async function loadOrderDetail() {
   const orderId = route.params.orderId;
   if (!orderId) {
     ElMessage.error('订单ID不能为空');
-    router.push('/sales');
+    router.push('/dashboard/sales');
     return;
   }
   
@@ -167,7 +167,7 @@ async function loadOrderDetail() {
     orderDetail.value = await getOrderDetail(orderId);
     if (!orderDetail.value) {
       ElMessage.error('订单不存在');
-      router.push('/sales');
+      router.push('/dashboard/sales');
       return;
     }
     
@@ -178,7 +178,7 @@ async function loadOrderDetail() {
     await loadCustomers();
   } catch (error) {
     ElMessage.error(error.message || '加载订单失败');
-    router.push('/sales');
+    router.push('/dashboard/sales');
   }
 }
 
@@ -191,7 +191,7 @@ async function loadCustomers() {
 }
 
 function goBack() {
-  router.push('/sales');
+  router.push('/dashboard/sales');
 }
 
 async function submitReturn() {
@@ -220,7 +220,7 @@ async function submitReturn() {
     await returnOrder(orderDetail.value.order_id, returnItems, reasonText, returnForm.remark);
     
     ElMessage.success('退货申请提交成功');
-    router.push('/sales');
+    router.push('/dashboard/sales');
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error(error.message || '提交退货申请失败');

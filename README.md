@@ -1,66 +1,251 @@
-每次修改文件前请先在根目录执行git pull拉取最新项目文件
-在最新文件中进行修改
-修改完成后执行git add .添加所有文件
+# 家电超市管理系统
 
-# 1. 查看文件状态
-git status
+基于 Flask + Vue.js 3 构建的现代化家电超市管理系统，提供完整的库存管理、销售管理、采购管理、财务管理等功能模块。
 
-# 2. 如果显示绿色文件（已暂存），则先提交
-git commit -m "描述修改内容"
-运行git log可查看项目修改日志
+## 技术栈
 
-# 3. 拉取远程更新并合并
-git pull 
+### 后端
+- **框架**: Flask 2.0+
+- **数据库**: SQLite 3
+- **ORM**: SQLAlchemy 2.0+
+- **认证**: JWT (PyJWT)
+- **密码加密**: bcrypt
 
-# 4. 如果有冲突，解决后执行 git add 和 git commit
-# 5. 推送
+### 前端
+- **框架**: Vue.js 3 (Composition API)
+- **构建工具**: Vite 5.0+
+- **UI 组件**: Element Plus
+- **状态管理**: Pinia
+- **路由**: Vue Router
+- **图表**: ECharts
+- **HTTP 客户端**: Axios
 
-git push
-supermarket-system/                 # 项目根目录
-│
-├── backend/                        # 后端代码（Node.js + Express）
-│   ├── api/                        # API 路由模块（按业务拆分）
-│   │   ├── products.js             # 产品相关接口
-│   │   ├── orders.js               # 销售订单接口
-│   │   ├── purchase.js             # 采购订单接口
-│   │   ├── users.js                # 用户注册/登录接口
-│   │   ├── finance.js              # 财务统计接口
-│   │   └── reports.js              # 报表接口
-│   ├── models/                     # 数据模型（可选，直接操作 SQLite）
-│   │   └── db.js                   # 数据库连接与初始化
-│   ├── middleware/                 # 中间件（如身份验证、日志）
-│   │   └── auth.js                 # JWT 或 session 验证
-│   ├── utils/                      # 工具函数
-│   │   └── helpers.js
-│   ├── server.js                   # 应用入口，注册路由、启动服务
-│   ├── package.json                # 后端依赖
-│   └── .env                        # 环境变量（端口、数据库路径等）
-│
-├── frontend/                       # 前端静态文件（独立于后端）
-│   ├── index.html                  # 客户主页面
-│   ├── admin.html                  # 后台管理页面
-│   ├── css/
-│   │   ├── common.css              # 公共样式
-│   │   ├── front.css               # 前台样式
-│   │   └── admin.css               # 后台样式
-│   ├── js/
-│   │   ├── common.js               # 公共函数（API 调用封装、工具）
-│   │   ├── front.js                # 前台业务逻辑
-│   │   └── admin/                  # 后台模块脚本（按功能拆分）
-│   │       ├── admin.js            # 后台入口（路由、权限）
-│   │       ├── inventory.js        # 库存管理模块
-│   │       ├── sales.js            # 销售管理模块
-│   │       ├── purchase.js         # 采购管理模块
-│   │       ├── users.js            # 用户管理模块
-│   │       ├── finance.js          # 财务管理模块
-│   │       └── reports.js          # 统计报表模块
-│   └── assets/                     # 图片、图标等
-│
-├── database/                       # SQLite 数据库文件存放目录
-│   └── supermarket.db              # 实际数据库文件（被 .gitignore 忽略）
-│
-├── logs/                           # 日志文件（可选）
-│
-├── .gitignore                      # 忽略 node_modules, database/*.db, .env 等
-├── README.md                       # 项目说明文档
-└── package.json                    # 根目录 package.json（如果前后端统一管理）
+## 功能模块
+
+### 1. 库存管理
+- 商品信息管理（添加、编辑、删除、禁用）
+- 库存查询与预警
+- 库存流水记录
+- 库存调整与盘点
+
+### 2. 销售管理
+- 订单创建与支付
+- 积分抵扣功能
+- 退货管理
+- 销售统计报表
+
+### 3. 采购管理
+- 采购订单管理
+- 收货确认与质检
+- 供应商管理
+- 采购建议生成
+
+### 4. 客户管理
+- 客户信息管理
+- 积分系统
+- 购买历史记录
+- 品类/品牌偏好分析
+
+### 5. 员工管理
+- 员工信息管理
+- 角色权限控制（管理员、收银员、采购员）
+- 密码重置
+- 删除员工功能
+
+### 6. 财务管理
+- 财务流水记录
+- 收入/支出分析
+- 利润计算
+- 其他支出录入
+
+### 7. 数据管理
+- 数据库备份与恢复
+- 数据导入导出
+- 数据库初始化
+
+### 8. 统计报表
+- 销售趋势分析
+- 供应商采购排名
+- 库存变化趋势
+
+## 项目结构
+
+```
+supermarket/
+├── backend/                    # 后端代码
+│   ├── app.py                  # Flask 应用入口
+│   ├── models.py               # 数据库模型定义
+│   ├── routes/                 # API 路由
+│   │   ├── auth.py             # 认证相关
+│   │   ├── employees.py        # 员工管理
+│   │   ├── products.py         # 产品管理
+│   │   ├── stock.py            # 库存管理
+│   │   ├── sales.py            # 销售管理
+│   │   ├── purchase.py         # 采购管理
+│   │   ├── suppliers.py        # 供应商管理
+│   │   ├── customers.py        # 客户管理
+│   │   ├── finance.py          # 财务管理
+│   │   ├── reports.py          # 报表统计
+│   │   ├── dashboard.py        # 仪表盘
+│   │   └── db_manage.py        # 数据库管理
+│   ├── middleware/             # 中间件
+│   │   └── auth.py             # 认证中间件
+│   ├── init_db.py              # 数据库初始化脚本
+│   └── database.db             # SQLite 数据库文件
+├── src/                        # 前端代码
+│   ├── views/                  # 页面组件
+│   ├── components/             # 通用组件
+│   ├── api/                    # API 客户端
+│   ├── router/                 # 路由配置
+│   ├── stores/                 # 状态管理
+│   ├── utils/                  # 工具函数
+│   ├── App.vue                 # 根组件
+│   └── main.js                 # 入口文件
+├── index.html                  # HTML 模板
+├── package.json                # 前端依赖
+├── vite.config.js              # Vite 配置
+└── README.md                   # 项目说明
+```
+
+## 快速开始
+
+### 环境要求
+- Python 3.8+
+- Node.js 18+
+- npm 或 yarn
+
+### 安装依赖
+
+#### 后端依赖
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+#### 前端依赖
+```bash
+npm install
+```
+
+### 初始化数据库
+
+```bash
+cd backend
+python init_db.py
+```
+
+### 启动服务
+
+#### 启动后端服务
+```bash
+cd backend
+python app.py
+```
+后端服务将运行在 http://localhost:5001
+
+#### 启动前端开发服务器
+```bash
+npm run dev
+```
+前端服务将运行在 http://localhost:5173
+
+### 构建生产版本
+
+```bash
+npm run build
+```
+
+## 默认账号
+
+系统初始化后创建以下默认账号：
+
+| 角色 | 用户名 | 密码 |
+|------|--------|------|
+| 管理员 | admin | 123 |
+| 收银员 | cashier | 123 |
+| 采购员 | buyer | 123 |
+
+## API 接口
+
+### 认证接口
+- `POST /api/auth/login` - 用户登录
+- `POST /api/auth/logout` - 用户退出
+- `POST /api/auth/verify` - 验证 Token
+
+### 员工管理（管理员权限）
+- `GET /api/employees` - 获取员工列表
+- `POST /api/employees` - 添加员工
+- `GET /api/employees/<id>` - 获取员工详情
+- `PUT /api/employees/<id>` - 更新员工信息
+- `DELETE /api/employees/<id>` - 删除员工
+
+### 产品管理
+- `GET /api/products` - 获取产品列表
+- `POST /api/products` - 添加产品
+- `GET /api/products/<id>` - 获取产品详情
+- `PUT /api/products/<id>` - 更新产品
+- `DELETE /api/products/<id>` - 删除产品
+
+### 库存管理
+- `GET /api/stock/<product_id>` - 查询库存
+- `POST /api/stock/add` - 增加库存
+- `POST /api/stock/deduct` - 扣减库存
+- `GET /api/stock/logs` - 获取库存流水
+
+### 销售管理
+- `GET /api/sales/orders` - 获取销售订单
+- `POST /api/sales/orders` - 创建订单
+- `POST /api/sales/orders/<id>/pay` - 支付订单
+- `POST /api/sales/orders/<id>/return` - 退货
+
+### 采购管理
+- `GET /api/purchase/orders` - 获取采购订单
+- `POST /api/purchase/orders` - 创建采购订单
+- `POST /api/purchase/orders/<id>/receipt` - 确认收货
+
+### 财务管理
+- `GET /api/finance/records` - 获取财务流水
+- `POST /api/finance/other-expense` - 录入其他支出
+- `GET /api/finance/summary` - 获取财务汇总
+
+## 权限说明
+
+### 管理员权限
+- 访问所有功能模块
+- 管理员工账号
+- 数据管理（备份、恢复、导入导出）
+
+### 收银员权限
+- 销售管理（创建订单、处理退货）
+- 库存管理（查看库存）
+
+### 采购员权限
+- 采购管理（创建采购订单、确认收货）
+- 供应商管理
+
+## 开发说明
+
+### 开发模式
+后端使用 Flask 调试模式运行，支持热重载。
+前端使用 Vite 开发服务器，支持 HMR 热更新。
+
+### 代码规范
+- Python 代码遵循 PEP 8 规范
+- JavaScript/TypeScript 代码遵循 ESLint 规范
+- Vue 组件使用 Composition API
+
+## 安全注意事项
+
+1. 密码使用 bcrypt 加密存储
+2. JWT Token 有效期为 24 小时
+3. 敏感接口需要管理员权限验证
+4. 使用 HTTPS 进行生产部署
+5. 定期备份数据库
+
+## License
+
+MIT License
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request！

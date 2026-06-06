@@ -132,8 +132,8 @@
       </el-table-column>
       <el-table-column label="积分抵扣" width="110">
         <template #default="{ row }">
-          <span v-if="row.used_points > 0" style="color: #e6a23c">
-            {{ row.used_points }}积分
+          <span v-if="row.points_used > 0" style="color: #e6a23c">
+            {{ row.points_used }}积分抵¥{{ (row.points_discount || row.points_used / 100).toFixed(2) }}
           </span>
           <span v-else style="color: #909399">-</span>
         </template>
@@ -147,13 +147,14 @@
       </el-table-column>
       <el-table-column label="获得积分" width="100">
         <template #default="{ row }">
-          <span v-if="row.earned_points > 0" style="color: #409eff">
-            +{{ row.earned_points }}
+          <span v-if="row.points_earned > 0" style="color: #409eff">
+            +{{ row.points_earned }}
           </span>
           <span v-else style="color: #909399">-</span>
         </template>
       </el-table-column>
       <el-table-column prop="payment_method" label="支付方式" width="100" />
+      <el-table-column prop="remark" label="备注" min-width="150" />
       <el-table-column label="订单状态" width="100">
         <template #default="{ row }">
           <el-tag :type="getOrderStatusType(row)" size="small">
@@ -490,17 +491,25 @@
         </el-table>
         
         <!-- 会员优惠信息 -->
-        <div v-if="orderDetail.discount_amount > 0 || orderDetail.used_points > 0" class="member-discount-detail">
+        <div v-if="orderDetail.discount_amount > 0 || orderDetail.points_used > 0 || orderDetail.points_earned > 0" class="member-discount-detail">
           <el-divider content-position="left">会员优惠</el-divider>
           <el-descriptions :column="2" border size="small">
             <el-descriptions-item v-if="orderDetail.discount_amount > 0" label="会员折扣">
               <span class="discount-text">-¥{{ orderDetail.discount_amount.toFixed(2) }}</span>
             </el-descriptions-item>
-            <el-descriptions-item v-if="orderDetail.used_points > 0" label="积分抵扣">
-              <span class="points-text">{{ orderDetail.used_points }}积分抵¥{{ (orderDetail.used_points / 100).toFixed(2) }}</span>
+            <el-descriptions-item v-if="orderDetail.points_used > 0" label="积分抵扣">
+              <div>
+                <span class="points-text">{{ orderDetail.points_used }}积分抵¥{{ (orderDetail.points_discount || orderDetail.points_used / 100).toFixed(2) }}</span>
+                <div style="font-size: 12px; color: #909399; margin-top: 4px">
+                  抵扣比例：100积分 = 1元
+                </div>
+              </div>
             </el-descriptions-item>
             <el-descriptions-item label="获得积分">
-              <el-tag type="success" size="small">+{{ orderDetail.earned_points }} 积分</el-tag>
+              <el-tag type="success" size="small">+{{ orderDetail.points_earned || 0 }} 积分</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.points_earned > 0" label="积分规则">
+              <span style="font-size: 12px; color: #909399">消费1元获得1积分</span>
             </el-descriptions-item>
           </el-descriptions>
         </div>
@@ -511,8 +520,8 @@
         <div v-if="orderDetail.discount_amount > 0" class="detail-total discount">
           会员折扣：<span>-¥{{ orderDetail.discount_amount.toFixed(2) }}</span>
         </div>
-        <div v-if="orderDetail.used_points > 0" class="detail-total points">
-          积分抵扣：<span>-¥{{ (orderDetail.used_points / 100).toFixed(2) }}</span>
+        <div v-if="orderDetail.points_used > 0" class="detail-total points">
+          积分抵扣：<span>-¥{{ (orderDetail.points_discount || orderDetail.points_used / 100).toFixed(2) }}</span>
         </div>
         <div class="detail-total final">
           实际支付：<span class="final-amount">¥{{ (orderDetail.final_amount || orderDetail.total_amount).toFixed(2) }}</span>
@@ -619,14 +628,14 @@ import { useRouter } from 'vue-router';
 import eventBus from '../utils/eventBus';
 import {
   getOrderHistory,
-  getOrderDetail as getOrderDetailApi,
+  getOrderDetail,
   createOrder as createOrderApi,
   payOrder as payOrderApi,
   deleteOrder,
   getCustomers,
   addCustomer as addCustomerApi,
   getProducts
-} from '../api/mockApi';
+} from '../api/realApi';
 
 const userStore = useUserStore();
 const isAdmin = computed(() => userStore.role === 'admin');
@@ -935,7 +944,7 @@ function handleOrderPageChange() {}
 
 async function viewOrderDetail(row) {
   try {
-    orderDetail.value = await getOrderDetailApi(row.order_id);
+    orderDetail.value = await getOrderDetail(row.order_id);
     detailVisible.value = true;
   } catch (error) {
     ElMessage.error('加载订单详情失败');
@@ -978,7 +987,7 @@ async function handleDeleteFromDetail() {
 
 function handleReturnFromDetail() {
   if (!orderDetail.value) return;
-  router.push(`/return/${orderDetail.value.order_id}`);
+  router.push(`/dashboard/return/${orderDetail.value.order_id}`);
   detailVisible.value = false;
 }
 
@@ -1085,14 +1094,11 @@ async function handleDeleteOrder(row) {
 
 async function getOrderItems(orderId) {
   try {
-    const db = JSON.parse(localStorage.getItem('supermarket_db') || '{}');
-    const items = (db.sales_order_items || []).filter(i => i.order_id === orderId);
-    
-    if (items.length > 0) {
-      const products = db.products || [];
-      return items.map(item => ({
+    const orderDetail = await getOrderDetail(orderId);
+    if (orderDetail && orderDetail.items) {
+      return orderDetail.items.map(item => ({
         ...item,
-        product_name: products.find(p => p.product_id === item.product_id)?.product_name || `商品${item.product_id}`
+        product_name: item.product_name || `商品${item.product_id}`
       }));
     }
     return [];
@@ -1102,7 +1108,7 @@ async function getOrderItems(orderId) {
 }
 
 function handleReturnOrder(row) {
-  router.push(`/return/${row.order_id}`);
+  router.push(`/dashboard/return/${row.order_id}`);
 }
 
 function handleCustomerChange(customerId) {
@@ -1304,7 +1310,7 @@ async function navigateToOrderDetail(orderId) {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     await router.push({
-      path: '/sales',
+      path: '/dashboard/sales',
       query: { orderId }
     });
     

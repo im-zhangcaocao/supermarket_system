@@ -15,11 +15,10 @@
           {{ formatSize(dbStatus.size) }}
         </el-descriptions-item>
         <el-descriptions-item label="备份状态">
-          <el-tag v-if="dbStatus.backup" type="success">已有备份</el-tag>
-          <el-tag v-else type="info">无备份</el-tag>
+          <el-tag type="success">后端存储</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="备份时间">
-          {{ dbStatus.backup ? formatDate(dbStatus.backup.timestamp) : '-' }}
+        <el-descriptions-item label="存储方式">
+          <el-tag type="info">SQLite 数据库</el-tag>
         </el-descriptions-item>
       </el-descriptions>
       
@@ -47,11 +46,6 @@
         <el-button type="primary" @click="handleCreateBackup" :loading="loading.backup">
           <span class="btn-icon">💾</span>
           创建备份
-        </el-button>
-        
-        <el-button type="warning" @click="handleRestoreBackup" :disabled="!dbStatus?.backup" :loading="loading.restore">
-          <span class="btn-icon">↩️</span>
-          恢复备份
         </el-button>
         
         <el-button type="info" @click="handleExportDatabase" :loading="loading.export">
@@ -83,21 +77,6 @@
         </el-button>
       </el-space>
     </el-card>
-    
-    <el-card class="logs-card" style="margin-top: 20px;">
-      <template #header>
-        <div class="card-header">
-          <span>操作日志</span>
-        </div>
-      </template>
-      
-      <el-table :data="operationLogs" border style="width: 100%;" max-height="400">
-        <el-table-column prop="operate_time" label="时间" width="180"></el-table-column>
-        <el-table-column prop="operator" label="操作人" width="120"></el-table-column>
-        <el-table-column prop="operation_type" label="操作类型" width="150"></el-table-column>
-        <el-table-column prop="remark" label="备注"></el-table-column>
-      </el-table>
-    </el-card>
   </div>
 </template>
 
@@ -107,18 +86,15 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import {
   getDatabaseStatus,
   createBackup,
-  restoreFromBackup,
   exportDatabase,
   importDatabase,
   clearDatabase,
-  getTable
-} from '../utils/database.js';
+  reinitializeDatabase
+} from '../api/dbApi';
 
 const dbStatus = ref(null);
-const operationLogs = ref([]);
 const loading = ref({
   backup: false,
-  restore: false,
   export: false,
   import: false,
   clear: false,
@@ -131,37 +107,24 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '-';
-  const date = new Date(dateStr);
-  return date.toLocaleString('zh-CN');
-}
-
-function loadDatabaseStatus() {
+async function loadDatabaseStatus() {
   try {
-    dbStatus.value = getDatabaseStatus();
-    loadOperationLogs();
+    dbStatus.value = await getDatabaseStatus();
   } catch (error) {
     ElMessage.error('获取数据库状态失败');
     console.error(error);
   }
 }
 
-function loadOperationLogs() {
-  try {
-    const logs = getTable('operation_logs');
-    operationLogs.value = logs.slice(-50).reverse(); // 显示最新的50条
-  } catch (error) {
-    console.error('加载操作日志失败', error);
-  }
-}
-
 async function handleCreateBackup() {
   try {
     loading.value.backup = true;
-    await createBackup();
-    ElMessage.success('备份创建成功');
-    loadDatabaseStatus();
+    const success = await createBackup();
+    if (success) {
+      ElMessage.success('备份创建成功（已保存到服务器）');
+    } else {
+      ElMessage.error('备份创建失败');
+    }
   } catch (error) {
     ElMessage.error('备份创建失败');
     console.error(error);
@@ -170,50 +133,26 @@ async function handleCreateBackup() {
   }
 }
 
-async function handleRestoreBackup() {
-  try {
-    await ElMessageBox.confirm(
-      '确定要从备份恢复数据库吗？此操作将覆盖当前数据！',
-      '恢复确认',
-      {
-        confirmButtonText: '确定恢复',
-        cancelButtonText: '取消',
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger'
-      }
-    );
-    
-    loading.value.restore = true;
-    await restoreFromBackup();
-    ElMessage.success('数据库恢复成功');
-    loadDatabaseStatus();
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('恢复失败');
-      console.error(error);
-    }
-  } finally {
-    loading.value.restore = false;
-  }
-}
-
 async function handleExportDatabase() {
   try {
     loading.value.export = true;
-    const data = exportDatabase();
+    const data = await exportDatabase();
     
-    // 创建下载
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `supermarket-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    ElMessage.success('数据库导出成功');
+    if (data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `supermarket-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      ElMessage.success('数据库导出成功');
+    } else {
+      ElMessage.error('导出失败');
+    }
   } catch (error) {
     ElMessage.error('导出失败');
     console.error(error);
@@ -225,6 +164,14 @@ async function handleExportDatabase() {
 async function handleImportDatabase(file) {
   try {
     const text = await file.text();
+    let importData;
+    
+    try {
+      importData = JSON.parse(text);
+    } catch {
+      ElMessage.error('无效的JSON文件');
+      return false;
+    }
     
     await ElMessageBox.confirm(
       '确定要导入此文件吗？此操作将覆盖当前数据！',
@@ -238,9 +185,16 @@ async function handleImportDatabase(file) {
     );
     
     loading.value.import = true;
-    await importDatabase(text);
-    ElMessage.success('数据库导入成功');
-    loadDatabaseStatus();
+    
+    const importDataForBackend = importData.tables ? importData : importData.data;
+    const success = await importDatabase(importDataForBackend);
+    
+    if (success) {
+      ElMessage.success('数据库导入成功');
+      loadDatabaseStatus();
+    } else {
+      ElMessage.error('导入失败');
+    }
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('导入失败');
@@ -249,7 +203,7 @@ async function handleImportDatabase(file) {
   } finally {
     loading.value.import = false;
   }
-  return false; // 阻止默认上传行为
+  return false;
 }
 
 async function handleClearDatabase() {
@@ -266,11 +220,14 @@ async function handleClearDatabase() {
     );
     
     loading.value.clear = true;
-    localStorage.removeItem('supermarket_db');
-    localStorage.removeItem('supermarket_db_backup');
-    localStorage.removeItem('supermarket_db_version');
-    ElMessage.success('数据库清空成功');
-    loadDatabaseStatus();
+    const success = await clearDatabase();
+    
+    if (success) {
+      ElMessage.success('数据库清空成功');
+      loadDatabaseStatus();
+    } else {
+      ElMessage.error('清空失败');
+    }
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('清空失败');
@@ -284,7 +241,7 @@ async function handleClearDatabase() {
 async function handleReinitializeData() {
   try {
     await ElMessageBox.confirm(
-      '确定要重新初始化数据库吗？\n\n此操作将：\n1. 清除所有现有数据\n2. 重新创建10条模拟数据记录\n3. 验证数据完整性\n\n所有数据表将被重置为初始状态！',
+      '确定要重新初始化数据库吗？\n\n此操作将：\n1. 清除所有现有数据\n2. 重新创建示例数据记录\n\n所有数据表将被重置为初始状态！',
       '重新初始化确认',
       {
         confirmButtonText: '确定初始化',
@@ -295,17 +252,14 @@ async function handleReinitializeData() {
     );
     
     loading.value.reinit = true;
+    const success = await reinitializeDatabase();
     
-    // 清除现有数据
-    localStorage.removeItem('supermarket_db');
-    localStorage.removeItem('supermarket_db_backup');
-    localStorage.removeItem('supermarket_db_version');
-    
-    // 重新初始化（会自动加载新的mock数据）
-    const db = getDatabaseStatus();
-    
-    ElMessage.success('数据库重新初始化成功！');
-    loadDatabaseStatus();
+    if (success) {
+      ElMessage.success('数据库重新初始化成功！');
+      loadDatabaseStatus();
+    } else {
+      ElMessage.error('初始化失败');
+    }
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('初始化失败');
@@ -344,8 +298,7 @@ onMounted(() => {
 }
 
 .status-card,
-.operations-card,
-.logs-card {
+.operations-card {
   margin-bottom: 20px;
 }
 </style>

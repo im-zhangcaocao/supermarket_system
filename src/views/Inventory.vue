@@ -59,6 +59,31 @@
           @input="handleSearch"
         />
       </div>
+      <div class="sort-controls">
+        <el-select v-model="sortBy" placeholder="排序字段" style="width: 120px; margin-right: 10px">
+          <el-option label="产品ID" value="product_id" />
+          <el-option label="产品名称" value="product_name" />
+          <el-option label="库存" value="current_stock" />
+        </el-select>
+        <el-button-group>
+          <el-button 
+            :type="sortOrder === 'asc' ? 'primary' : 'default'" 
+            size="small"
+            @click="setSortOrder('asc')"
+          >
+            <el-icon><ArrowUp /></el-icon>
+            升序
+          </el-button>
+          <el-button 
+            :type="sortOrder === 'desc' ? 'primary' : 'default'" 
+            size="small"
+            @click="setSortOrder('desc')"
+          >
+            <el-icon><ArrowDown /></el-icon>
+            降序
+          </el-button>
+        </el-button-group>
+      </div>
       <el-button v-if="isAdmin" type="primary" @click="openAddDialog">
         添加产品
       </el-button>
@@ -95,14 +120,14 @@
           {{ row.unit || '台' }}
         </template>
       </el-table-column>
+      <el-table-column prop="warehouse" label="仓库" width="100">
+        <template #default="{ row }">
+          {{ row.warehouse || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="shelf_no" label="货位" width="120">
         <template #default="{ row }">
           {{ row.shelf_no || '-' }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="warehouse_zone" label="仓库区域" width="100">
-        <template #default="{ row }">
-          {{ row.warehouse_zone || '-' }}
         </template>
       </el-table-column>
 
@@ -235,15 +260,14 @@
         <el-form-item label="销售单位" prop="unit">
           <el-input v-model="form.unit" placeholder="如：台、套、件" />
         </el-form-item>
-        <el-form-item label="货位" prop="shelf_no">
-          <el-input v-model="form.shelf_no" placeholder="如：A-01-03" />
+        <el-form-item label="仓库" prop="warehouse" required>
+          <el-select v-model="form.warehouse" placeholder="请选择仓库" clearable style="width: 100%">
+            <el-option v-for="item in warehouseOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="仓库区域" prop="warehouse_zone">
-          <el-select v-model="form.warehouse_zone" placeholder="请选择仓库区域" clearable>
-            <el-option label="常温区" value="常温区" />
-            <el-option label="大件区" value="大件区" />
-            <el-option label="冷藏区" value="冷藏区" />
-            <el-option label="特殊区" value="特殊区" />
+        <el-form-item label="货位" prop="shelf_no" required>
+          <el-select v-model="form.shelf_no" placeholder="请选择货位" clearable style="width: 100%">
+            <el-option v-for="item in shelfOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
 
@@ -363,12 +387,12 @@
               <span>{{ detailProduct?.unit || '台' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">货位：</span>
-              <span>{{ detailProduct?.shelf_no || '-' }}</span>
+              <span class="label">仓库：</span>
+              <span>{{ detailProduct?.warehouse || '-' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">仓库区域：</span>
-              <span>{{ detailProduct?.warehouse_zone || '-' }}</span>
+              <span class="label">货位：</span>
+              <span>{{ detailProduct?.shelf_no || '-' }}</span>
             </div>
 
             <div class="info-item">
@@ -386,6 +410,17 @@
         <el-tabs v-model="activeTab" class="detail-tabs">
           <!-- 库存流水 -->
           <el-tab-pane label="库存流水" name="stock">
+            <!-- 筛选区域 -->
+            <div class="filter-bar">
+              <el-select v-model="stockFilter.change_type" placeholder="请选择变动类型" clearable class="filter-select">
+                <el-option v-for="item in changeTypes" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+              <el-date-picker v-model="stockFilter.start_date" type="date" placeholder="开始日期" class="filter-date" />
+              <el-date-picker v-model="stockFilter.end_date" type="date" placeholder="结束日期" class="filter-date" />
+              <el-button @click="loadStockLogs(detailProduct?.product_id)" class="filter-btn">查询</el-button>
+              <el-button @click="resetStockFilter" class="filter-btn">重置</el-button>
+            </div>
+            
             <el-table :data="stockLogs" border stripe>
               <el-table-column prop="change_type" label="变动类型" width="120">
                 <template #default="{ row }">
@@ -394,13 +429,30 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="change_qty" label="变动数量" width="100" />
+              <el-table-column prop="change_qty" label="变动数量" width="100">
+                <template #default="{ row }">
+                  <span :class="row.change_qty > 0 ? 'text-success' : 'text-danger'">
+                    {{ row.change_qty > 0 ? '+' : '' }}{{ row.change_qty }}
+                  </span>
+                </template>
+              </el-table-column>
               <el-table-column prop="before_quantity" label="变动前库存" width="120" />
               <el-table-column prop="after_quantity" label="变动后库存" width="120" />
               <el-table-column prop="operator" label="操作人" width="100" />
               <el-table-column prop="operate_time" label="操作时间" width="160" />
               <el-table-column prop="remark" label="备注" />
             </el-table>
+            
+            <!-- 分页 -->
+            <el-pagination
+              v-if="stockLogTotal > 0"
+              :current-page="stockLogPage"
+              :page-size="stockLogPageSize"
+              :total="stockLogTotal"
+              @current-change="handleStockLogPageChange"
+              layout="total, prev, pager, next, jumper"
+              class="pagination"
+            />
             <div v-if="stockLogs.length === 0" class="empty-tip">暂无库存流水记录</div>
           </el-tab-pane>
           
@@ -439,7 +491,7 @@ import {
   manualAdjust,
   getStockLog,
   getProductEditLogs
-} from '../api/mockApi';
+} from '../api/realApi';
 
 const userStore = useUserStore();
 
@@ -455,6 +507,8 @@ const filterBrand = ref(null);
 const showOnlyAlert = ref(false);
 const currentPage = ref(1);
 const pageSize = ref(10);
+const sortBy = ref('product_id');
+const sortOrder = ref('desc');
 const dialogVisible = ref(false);
 const isEdit = ref(false);
 const submitLoading = ref(false);
@@ -478,12 +532,45 @@ const detailProduct = ref(null);
 const activeTab = ref('stock');
 const stockLogs = ref([]);
 const editLogs = ref([]);
+const changeTypes = ref([
+  { value: '销售出库', label: '销售出库' },
+  { value: '采购入库', label: '采购入库' },
+  { value: '退货入库', label: '退货入库' },
+  { value: '损耗', label: '损耗' },
+  { value: '调拨入库', label: '调拨入库' },
+  { value: '调拨出库', label: '调拨出库' },
+  { value: '盘点调整', label: '盘点调整' }
+]);
+
+const stockFilter = reactive({
+  change_type: '',
+  start_date: '',
+  end_date: ''
+});
+
+const stockLogPage = ref(1);
+const stockLogPageSize = ref(20);
+const stockLogTotal = ref(0);
 
 const adjustRules = {
   type: [{ required: true, message: '请选择调整类型', trigger: 'change' }],
   quantity: [{ required: true, message: '请输入调整数量', trigger: 'blur' }],
   reason: [{ required: true, message: '请输入调整原因', trigger: 'blur' }]
 };
+
+const warehouseOptions = [
+  { value: 'A', label: '仓库 A' },
+  { value: 'B', label: '仓库 B' },
+  { value: 'C', label: '仓库 C' },
+  { value: 'D', label: '仓库 D' },
+  { value: 'E', label: '仓库 E' },
+  { value: 'F', label: '仓库 F' }
+];
+
+const shelfOptions = Array.from({ length: 20 }, (_, i) => ({
+  value: (i + 1).toString(),
+  label: `货位 ${i + 1}`
+}));
 
 const form = reactive({
   product_name: '',
@@ -495,8 +582,8 @@ const form = reactive({
   current_stock: 0,
   threshold: 5,
   unit: '台',
+  warehouse: '',
   shelf_no: '',
-  warehouse_zone: '',
   status: 1
 });
 
@@ -507,7 +594,9 @@ const formRules = {
   category: [{ required: true, message: '请选择类别', trigger: 'change' }],
   retail_price: [{ required: true, message: '请输入零售价', trigger: 'blur' }],
   current_stock: [{ required: true, message: '请输入库存', trigger: 'blur' }],
-  threshold: [{ required: true, message: '请输入预警阈值', trigger: 'blur' }]
+  threshold: [{ required: true, message: '请输入预警阈值', trigger: 'blur' }],
+  warehouse: [{ required: true, message: '请选择仓库', trigger: 'change' }],
+  shelf_no: [{ required: true, message: '请选择货位', trigger: 'change' }]
 };
 
 const availableBrands = computed(() => {
@@ -578,10 +667,19 @@ function handlePageChange() {}
 
 async function loadProducts() {
   try {
-    products.value = await getProducts();
+    products.value = await getProducts({
+      category: filterCategory.value,
+      sort_by: sortBy.value,
+      sort_order: sortOrder.value
+    });
   } catch (error) {
     ElMessage.error('加载产品列表失败');
   }
+}
+
+function setSortOrder(order) {
+  sortOrder.value = order;
+  loadProducts();
 }
 
 async function loadAlertProducts() {
@@ -612,8 +710,8 @@ function openEditDialog(row) {
     current_stock: row.current_stock,
     threshold: row.threshold,
     unit: row.unit || '台',
+    warehouse: row.warehouse || '',
     shelf_no: row.shelf_no || '',
-    warehouse_zone: row.warehouse_zone || '',
     status: row.status
   });
   dialogVisible.value = true;
@@ -630,8 +728,8 @@ function resetForm() {
     current_stock: 0,
     threshold: 5,
     unit: '台',
+    warehouse: '',
     shelf_no: '',
-    warehouse_zone: '',
     status: 1
   });
   formRef.value?.clearValidate();
@@ -787,12 +885,49 @@ async function openDetailDrawer(row) {
 
 async function loadStockLogs(productId) {
   try {
-    const logs = await getStockLog(productId);
-    stockLogs.value = logs;
+    const params = {
+      product_id: productId,
+      page: stockLogPage.value,
+      page_size: stockLogPageSize.value
+    };
+    
+    if (stockFilter.change_type) {
+      params.change_type = stockFilter.change_type;
+    }
+    if (stockFilter.start_date) {
+      params.start_date = formatDate(stockFilter.start_date);
+    }
+    if (stockFilter.end_date) {
+      params.end_date = formatDate(stockFilter.end_date);
+    }
+    
+    const result = await getStockLog(params);
+    stockLogs.value = result.data || result;
+    stockLogTotal.value = result.total || 0;
   } catch (error) {
     ElMessage.error('加载库存流水失败');
     stockLogs.value = [];
+    stockLogTotal.value = 0;
   }
+}
+
+function resetStockFilter() {
+  stockFilter.change_type = '';
+  stockFilter.start_date = '';
+  stockFilter.end_date = '';
+  stockLogPage.value = 1;
+  loadStockLogs(detailProduct.value?.product_id);
+}
+
+function handleStockLogPageChange(page) {
+  stockLogPage.value = page;
+  loadStockLogs(detailProduct.value?.product_id);
+}
+
+function formatDate(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 async function loadEditLogs(productId) {
@@ -807,6 +942,17 @@ async function loadEditLogs(productId) {
 
 function getChangeTypeName(type) {
   const typeMap = {
+    '手动调整': '手动调整',
+    '采购入库': '采购入库',
+    '销售出库': '销售出库',
+    '退货入库': '退货入库',
+    '损耗': '损耗',
+    '调拨入库': '调拨入库',
+    '调拨出库': '调拨出库',
+    '盘点调整': '盘点调整',
+    '盘盈': '盘盈',
+    '盘亏': '盘亏',
+    '退货': '退货',
     1: '手动调整',
     2: '采购入库',
     3: '销售出库',
@@ -816,11 +962,22 @@ function getChangeTypeName(type) {
     7: '调拨入库',
     8: '退货'
   };
-  return typeMap[type] || '未知';
+  return typeMap[type] || type || '未知';
 }
 
 function getChangeTypeTag(type) {
   const typeMap = {
+    '手动调整': 'warning',
+    '采购入库': 'success',
+    '销售出库': 'danger',
+    '退货入库': 'warning',
+    '损耗': 'danger',
+    '调拨入库': 'primary',
+    '调拨出库': 'info',
+    '盘点调整': 'success',
+    '盘盈': 'success',
+    '盘亏': 'danger',
+    '退货': 'warning',
     1: 'warning',
     2: 'success',
     3: 'danger',
@@ -844,8 +1001,8 @@ function getFieldDisplayName(fieldName) {
     current_stock: '当前库存',
     threshold: '预警阈值',
     unit: '销售单位',
+    warehouse: '仓库',
     shelf_no: '货位',
-    warehouse_zone: '仓库区域',
     status: '状态'
   };
   return fieldMap[fieldName] || fieldName;

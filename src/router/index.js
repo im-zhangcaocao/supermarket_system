@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { useUserStore } from '../stores/user';
 
 const routes = [
   {
@@ -10,6 +9,10 @@ const routes = [
   },
   {
     path: '/',
+    redirect: '/login'
+  },
+  {
+    path: '/dashboard',
     name: 'Layout',
     component: () => import('../components/Layout.vue'),
     meta: { requiresAuth: true },
@@ -35,7 +38,7 @@ const routes = [
       },
       {
         path: 'suppliers',
-        redirect: '/purchase'
+        redirect: '/dashboard/purchase'
       },
       {
         path: 'users',
@@ -45,12 +48,14 @@ const routes = [
       {
         path: 'employees',
         name: 'Employees',
-        component: () => import('../views/Employee.vue')
+        component: () => import('../views/Employee.vue'),
+        meta: { requiresAdmin: true }
       },
       {
         path: 'finance',
         name: 'Finance',
-        component: () => import('../views/Finance.vue')
+        component: () => import('../views/Finance.vue'),
+        meta: { requiresAdmin: true }
       },
       {
         path: 'stats',
@@ -67,6 +72,11 @@ const routes = [
         name: 'DataAdmin',
         component: () => import('../views/DatabaseAdmin.vue'),
         meta: { requiresAdmin: true }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('../views/Profile.vue')
       }
     ]
   }
@@ -78,18 +88,35 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const userStore = useUserStore();
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
   
   if (to.path === '/login') {
-    if (userStore.isLoggedIn) {
-      next('/inventory');
+    if (token) {
+      next('/dashboard/inventory');
     } else {
       next();
     }
   } else {
-    if (userStore.isLoggedIn) {
+    if (!token || !user) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      next('/login');
+      return;
+    }
+    
+    try {
+      const userData = JSON.parse(user);
+      
+      if (to.meta.requiresAdmin && userData.role !== 'admin') {
+        next('/dashboard/inventory');
+        return;
+      }
+      
       next();
-    } else {
+    } catch (e) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       next('/login');
     }
   }

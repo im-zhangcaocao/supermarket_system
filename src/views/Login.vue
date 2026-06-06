@@ -67,14 +67,14 @@ async function handleLogin() {
     if (success) {
       ElMessage.success('登录成功');
       const role = userStore.role;
-      let redirectPath = '/inventory';
+      let redirectPath = '/dashboard/inventory';
       
       if (role === 'cashier') {
-        redirectPath = '/sales';
+        redirectPath = '/dashboard/sales';
       } else if (role === 'purchaser') {
-        redirectPath = '/purchase';
+        redirectPath = '/dashboard/purchase';
       } else if (role === 'admin') {
-        redirectPath = '/inventory';
+        redirectPath = '/dashboard/inventory';
       }
       
       router.push(redirectPath);

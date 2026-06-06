@@ -59,7 +59,7 @@
           {{ row.last_login || '从未登录' }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="300" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="viewDetail(row)">
             详情
@@ -74,6 +74,22 @@
             @click="toggleStatus(row)"
           >
             {{ row.status === 1 ? '禁用' : '启用' }}
+          </el-button>
+          <el-button 
+            type="info" 
+            link 
+            size="small" 
+            @click="handleResetPassword(row)"
+          >
+            重置密码
+          </el-button>
+          <el-button 
+            type="danger" 
+            link 
+            size="small" 
+            @click="handleDelete(row)"
+          >
+            删除
           </el-button>
         </template>
       </el-table-column>
@@ -175,8 +191,10 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { 
   getEmployees, 
   addEmployee, 
-  updateEmployee
-} from '../api/mockApi';
+  updateEmployee,
+  resetUserPassword,
+  deleteEmployee
+} from '../api/realApi';
 
 const employees = ref([]);
 const searchKeyword = ref('');
@@ -321,6 +339,62 @@ async function toggleStatus(employee) {
     loadEmployees();
   } catch (error) {
     ElMessage.error('操作失败');
+  }
+}
+
+async function handleResetPassword(employee) {
+  try {
+    const result = await ElMessageBox.confirm(
+      `确定要重置员工「${employee.real_name || employee.username}」的密码吗？\n重置后的密码为：用户名+123456\n用户首次登录时将强制要求修改密码。`,
+      '确认重置密码',
+      {
+        confirmButtonText: '确定重置',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    );
+    
+    if (result === 'confirm') {
+      const response = await resetUserPassword(employee.user_id);
+      if (response.success) {
+        ElMessage.success(`密码重置成功！\n新密码：${response.new_password}\n请告知用户首次登录需修改密码`);
+        loadEmployees();
+      } else {
+        ElMessage.error(response.message || '密码重置失败');
+      }
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('操作失败');
+    }
+  }
+}
+
+async function handleDelete(employee) {
+  try {
+    const result = await ElMessageBox.confirm(
+      `确定要删除员工「${employee.real_name || employee.username}」吗？\n此操作将无法撤销！`,
+      '确认删除',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'danger'
+      }
+    );
+    
+    if (result === 'confirm') {
+      const response = await deleteEmployee(employee.user_id);
+      if (response.success) {
+        ElMessage.success('删除成功');
+        loadEmployees();
+      } else {
+        ElMessage.error(response.message || '删除失败');
+      }
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('操作失败');
+    }
   }
 }
 

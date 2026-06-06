@@ -44,7 +44,6 @@
 
     <!-- 标签页 -->
     <el-tabs v-model="activeTab" class="finance-tabs">
-      <!-- 资金流水 -->
       <el-tab-pane label="资金流水" name="flow">
         <div class="toolbar">
           <div class="filter-group">
@@ -56,7 +55,7 @@
               end-placeholder="结束日期"
               value-format="YYYY-MM-DD"
               @change="loadData"
-            />
+            ></el-date-picker>
             <el-select
               v-model="filterType"
               placeholder="类型筛选"
@@ -64,9 +63,9 @@
               style="width: 120px; margin-left: 10px"
               @change="loadData"
             >
-              <el-option label="全部" :value="null" />
-              <el-option label="收入" :value="1" />
-              <el-option label="支出" :value="2" />
+              <el-option label="全部" :value="null"></el-option>
+              <el-option label="收入" :value="1"></el-option>
+              <el-option label="支出" :value="2"></el-option>
             </el-select>
           </div>
           <div class="action-group">
@@ -80,7 +79,7 @@
         </div>
         
         <el-table :data="displayRecords" border stripe style="width: 100%">
-          <el-table-column prop="record_id" label="记录ID" width="80" />
+          <el-table-column prop="record_id" label="记录ID" width="80"></el-table-column>
           <el-table-column label="类型" width="80">
             <template #default="{ row }">
               <el-tag :type="row.type === 1 ? 'success' : 'danger'" size="small">
@@ -95,9 +94,9 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="relate_order_id" label="关联订单" width="180" />
-          <el-table-column prop="occur_time" label="发生时间" width="170" />
-          <el-table-column prop="remark" label="备注" min-width="150" />
+          <el-table-column prop="relate_order_id" label="关联订单" width="180"></el-table-column>
+          <el-table-column prop="occur_time" label="发生时间" width="170"></el-table-column>
+          <el-table-column prop="remark" label="备注" min-width="150"></el-table-column>
         </el-table>
         
         <div class="pagination-wrapper">
@@ -109,19 +108,18 @@
             layout="total, sizes, prev, pager, next"
             @size-change="handleSizeChange"
             @current-change="handlePageChange"
-          />
+          ></el-pagination>
         </div>
       </el-tab-pane>
 
-      <!-- 收入分析 -->
       <el-tab-pane label="收入分析" name="income">
         <el-card shadow="hover">
           <template #header>
             <span>销售订单详情</span>
           </template>
           <el-table :data="incomeOrders" border stripe style="width: 100%">
-            <el-table-column prop="order_id" label="订单号" width="160" />
-            <el-table-column prop="customer_name" label="客户" width="120" />
+            <el-table-column prop="order_id" label="订单号" width="160"></el-table-column>
+            <el-table-column prop="customer_name" label="客户" width="120"></el-table-column>
             <el-table-column label="订单金额" width="120">
               <template #default="{ row }">
                 ¥{{ row.total_amount?.toFixed(2) || '0.00' }}
@@ -137,27 +135,26 @@
                 ¥{{ row.final_amount?.toFixed(2) || '0.00' }}
               </template>
             </el-table-column>
-            <el-table-column prop="order_time" label="订单时间" width="170" />
-            <el-table-column prop="payment_method" label="支付方式" width="100" />
+            <el-table-column prop="order_time" label="订单时间" width="170"></el-table-column>
+            <el-table-column prop="payment_method" label="支付方式" width="100"></el-table-column>
           </el-table>
         </el-card>
       </el-tab-pane>
 
-      <!-- 支出分析 -->
       <el-tab-pane label="支出分析" name="expense">
         <el-card shadow="hover">
           <template #header>
             <span>采购订单详情</span>
           </template>
           <el-table :data="expenseOrders" border stripe style="width: 100%">
-            <el-table-column prop="purchase_order_id" label="采购单号" width="180" />
-            <el-table-column prop="supplier_name" label="供应商" width="200" />
+            <el-table-column prop="purchase_order_id" label="采购单号" width="180"></el-table-column>
+            <el-table-column prop="supplier_name" label="供应商" width="200"></el-table-column>
             <el-table-column label="采购金额" width="120">
               <template #default="{ row }">
                 ¥{{ row.total_amount?.toFixed(2) || '0.00' }}
               </template>
             </el-table-column>
-            <el-table-column prop="order_time" label="订单时间" width="170" />
+            <el-table-column prop="order_time" label="订单时间" width="170"></el-table-column>
             <el-table-column prop="status" label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getStatusType(row.status)" size="small">
@@ -165,12 +162,11 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="remark" label="备注" min-width="150" />
+            <el-table-column prop="remark" label="备注" min-width="150"></el-table-column>
           </el-table>
         </el-card>
       </el-tab-pane>
 
-      <!-- 利润分析 -->
       <el-tab-pane label="利润分析" name="profit">
         <el-row :gutter="20" style="margin-top: 20px">
           <el-col :span="12">
@@ -200,15 +196,14 @@
         </el-row>
       </el-tab-pane>
 
-      <!-- 成本核算 -->
       <el-tab-pane label="成本核算" name="cost">
         <el-card shadow="hover">
           <template #header>
             <span>商品成本分析</span>
           </template>
           <el-table :data="productCosts" border stripe style="width: 100%">
-            <el-table-column prop="product_name" label="商品名称" width="180" />
-            <el-table-column prop="category" label="类别" width="100" />
+            <el-table-column prop="product_name" label="商品名称" width="180"></el-table-column>
+            <el-table-column prop="category" label="类别" width="100"></el-table-column>
             <el-table-column label="采购价" width="100">
               <template #default="{ row }">
                 ¥{{ row.purchase_price?.toFixed(2) || '0.00' }}
@@ -231,13 +226,13 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="sales_quantity" label="销售数量" width="100" />
+            <el-table-column prop="sales_quantity" label="销售数量" width="100"></el-table-column>
             <el-table-column label="总利润" width="120">
               <template #default="{ row }">
                 <span class="income-text">¥{{ row.total_profit.toFixed(2) }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="current_stock" label="当前库存" width="100" />
+            <el-table-column prop="current_stock" label="当前库存" width="100"></el-table-column>
           </el-table>
         </el-card>
       </el-tab-pane>
@@ -248,11 +243,11 @@
       <el-form ref="expenseFormRef" :model="expenseForm" :rules="expenseRules" label-width="100px">
         <el-form-item label="支出类型" prop="category">
           <el-select v-model="expenseForm.category" placeholder="请选择类型" style="width: 100%">
-            <el-option label="房租" value="房租" />
-            <el-option label="水电费" value="水电费" />
-            <el-option label="工资" value="工资" />
-            <el-option label="运输费" value="运输费" />
-            <el-option label="其他" value="其他" />
+            <el-option label="房租" value="房租"></el-option>
+            <el-option label="水电费" value="水电费"></el-option>
+            <el-option label="工资" value="工资"></el-option>
+            <el-option label="运输费" value="运输费"></el-option>
+            <el-option label="其他" value="其他"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="金额" prop="amount">
@@ -262,7 +257,7 @@
             :precision="2"
             :controls="false"
             style="width: 100%"
-          />
+          ></el-input-number>
         </el-form-item>
         <el-form-item label="日期" prop="date">
           <el-date-picker
@@ -271,7 +266,7 @@
             value-format="YYYY-MM-DD"
             placeholder="选择日期"
             style="width: 100%"
-          />
+          ></el-date-picker>
         </el-form-item>
         <el-form-item label="备注">
           <el-input
@@ -279,7 +274,7 @@
             type="textarea"
             :rows="2"
             placeholder="请输入备注"
-          />
+          ></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -300,7 +295,7 @@ import {
   getSalesOrders,
   getPurchaseOrders,
   getProducts
-} from '../api/mockApi';
+} from '../api/realApi';
 import { exportFinancialRecords } from '../utils/export';
 
 const activeTab = ref('flow');
@@ -461,7 +456,7 @@ async function loadPurchaseOrders() {
 
 async function loadProductData() {
   try {
-    products.value = await getProducts() || [];
+    products.value = await getProducts({}) || [];
   } catch (error) {
     console.error('加载商品数据失败:', error);
     ElMessage.error('加载商品数据失败');
@@ -541,6 +536,7 @@ function handleSizeChange() {
 }
 
 function handlePageChange() {
+  // Do nothing for now
 }
 
 onMounted(() => {

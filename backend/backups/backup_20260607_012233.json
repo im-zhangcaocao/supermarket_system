@@ -1,0 +1,470 @@
+{
+  "backup_time": "2026-06-07T01:22:33.811824",
+  "version": "1.0",
+  "tables": {
+    "users": [
+      {
+        "user_id": 1,
+        "username": "cashier",
+        "role": "cashier",
+        "status": 1,
+        "last_login": "2026-06-06T12:30:31.535294",
+        "phone": "13882023119",
+        "email": null,
+        "address": "",
+        "real_name": "党jy",
+        "salary_type": "monthly",
+        "salary_rate": 0.0,
+        "hire_date": null,
+        "reset_password_required": 0
+      },
+      {
+        "user_id": 2,
+        "username": "buyer",
+        "role": "purchaser",
+        "status": 1,
+        "last_login": "2026-06-06T12:35:09.822940",
+        "phone": "13880713199",
+        "email": null,
+        "address": "",
+        "real_name": "张xying",
+        "salary_type": "monthly",
+        "salary_rate": 0.0,
+        "hire_date": null,
+        "reset_password_required": 0
+      },
+      {
+        "user_id": 3,
+        "username": "admin",
+        "role": "admin",
+        "status": 1,
+        "last_login": "2026-06-06T13:01:05.485859",
+        "phone": "15272056009",
+        "email": null,
+        "address": "",
+        "real_name": "杨zl",
+        "salary_type": "monthly",
+        "salary_rate": 0.0,
+        "hire_date": null,
+        "reset_password_required": 0
+      }
+    ],
+    "customers": [
+      {
+        "customer_id": 1,
+        "name": "张三",
+        "phone": "13800138000",
+        "email": "zhangsan@example.com",
+        "address": "成都高新区",
+        "register_time": "2026-01-01",
+        "points": 5000,
+        "membership_level": "普通会员",
+        "discount_rate": 1.0,
+        "points_expiry_date": null
+      },
+      {
+        "customer_id": 2,
+        "name": "李四",
+        "phone": "13900139000",
+        "email": "lisi@example.com",
+        "address": "成都武侯区",
+        "register_time": "2026-02-15",
+        "points": 2000,
+        "membership_level": "普通会员",
+        "discount_rate": 1.0,
+        "points_expiry_date": null
+      },
+      {
+        "customer_id": 3,
+        "name": "王五",
+        "phone": "13700137000",
+        "email": "wangwu@example.com",
+        "address": "成都锦江区",
+        "register_time": "2026-03-20",
+        "points": 800,
+        "membership_level": "普通会员",
+        "discount_rate": 1.0,
+        "points_expiry_date": null
+      }
+    ],
+    "suppliers": [
+      {
+        "supplier_id": 1,
+        "supplier_name": "海尔电器有限公司",
+        "contact_person": "王经理",
+        "contact_phone": "0532-1234567",
+        "address": "青岛",
+        "status": 1
+      },
+      {
+        "supplier_id": 2,
+        "supplier_name": "美的集团",
+        "contact_person": "李经理",
+        "contact_phone": "0757-1234567",
+        "address": "佛山",
+        "status": 1
+      },
+      {
+        "supplier_id": 3,
+        "supplier_name": "小米科技有限公司",
+        "contact_person": "张经理",
+        "contact_phone": "010-1234567",
+        "address": "北京",
+        "status": 1
+      }
+    ],
+    "products": [
+      {
+        "product_id": 1,
+        "product_name": "海尔冰箱 BCD-216",
+        "brand": "海尔",
+        "model": "BCD-216",
+        "category": "冰箱",
+        "retail_price": 1899.0,
+        "purchase_ref_price": 1500.0,
+        "current_stock": 10,
+        "threshold": 5,
+        "status": 1,
+        "unit": "台",
+        "warehouse": "A",
+        "shelf_no": "1"
+      },
+      {
+        "product_id": 2,
+        "product_name": "美的空调 KFR-35",
+        "brand": "美的",
+        "model": "KFR-35",
+        "category": "空调",
+        "retail_price": 2599.0,
+        "purchase_ref_price": 2000.0,
+        "current_stock": 3,
+        "threshold": 5,
+        "status": 1,
+        "unit": "台",
+        "warehouse": "B",
+        "shelf_no": "5"
+      },
+      {
+        "product_id": 3,
+        "product_name": "小米电视 4A 55寸",
+        "brand": "小米",
+        "model": "4A55",
+        "category": "电视",
+        "retail_price": 1899.0,
+        "purchase_ref_price": 1600.0,
+        "current_stock": 13,
+        "threshold": 5,
+        "status": 1,
+        "unit": "台",
+        "warehouse": "C",
+        "shelf_no": "10"
+      },
+      {
+        "product_id": 4,
+        "product_name": "格力电风扇5N-6",
+        "brand": "格力",
+        "model": "5N-6",
+        "category": "其他",
+        "retail_price": 600.0,
+        "purchase_ref_price": 288.0,
+        "current_stock": 0,
+        "threshold": 5,
+        "status": 1,
+        "unit": "台",
+        "warehouse": "A",
+        "shelf_no": "3"
+      }
+    ],
+    "sales_orders": [
+      {
+        "order_id": "SO202606010001",
+        "customer_id": 1,
+        "customer_name": "张三",
+        "order_time": "2026-06-01T10:30:00",
+        "total_amount": 3798.0,
+        "discount_amount": 0.0,
+        "final_amount": 3798.0,
+        "payment_method": "微信支付",
+        "points_earned": 0,
+        "points_used": 0,
+        "points_discount": 0.0,
+        "payment_status": 1,
+        "shipping_address": "成都高新区天府大道100号",
+        "is_cancelled": 0,
+        "is_returned": 0,
+        "delivery_status": 0
+      },
+      {
+        "order_id": "SO202606020001",
+        "customer_id": 2,
+        "customer_name": "李四",
+        "order_time": "2026-06-02T14:20:00",
+        "total_amount": 2599.0,
+        "discount_amount": 0.0,
+        "final_amount": 2599.0,
+        "payment_method": "支付宝",
+        "points_earned": 0,
+        "points_used": 0,
+        "points_discount": 0.0,
+        "payment_status": 1,
+        "shipping_address": "成都武侯区科华北路66号",
+        "is_cancelled": 0,
+        "is_returned": 0,
+        "delivery_status": 0
+      },
+      {
+        "order_id": "SO202606030001",
+        "customer_id": 3,
+        "customer_name": "王五",
+        "order_time": "2026-06-03T09:45:00",
+        "total_amount": 1899.0,
+        "discount_amount": 0.0,
+        "final_amount": 1899.0,
+        "payment_method": "微信支付",
+        "points_earned": 0,
+        "points_used": 0,
+        "points_discount": 0.0,
+        "payment_status": 1,
+        "shipping_address": "成都锦江区春熙路100号",
+        "is_cancelled": 0,
+        "is_returned": 0,
+        "delivery_status": 0
+      }
+    ],
+    "sales_order_items": [
+      {
+        "item_id": 1,
+        "order_id": "SO202606010001",
+        "product_id": 1,
+        "product_name": "海尔冰箱 BCD-216",
+        "quantity": 2,
+        "unit_price": 1899.0,
+        "cost_price": 1500.0,
+        "category": "冰箱",
+        "brand": "海尔"
+      },
+      {
+        "item_id": 2,
+        "order_id": "SO202606020001",
+        "product_id": 2,
+        "product_name": "美的空调 KFR-35",
+        "quantity": 1,
+        "unit_price": 2599.0,
+        "cost_price": 2000.0,
+        "category": "空调",
+        "brand": "美的"
+      },
+      {
+        "item_id": 3,
+        "order_id": "SO202606030001",
+        "product_id": 3,
+        "product_name": "小米电视 4A 55寸",
+        "quantity": 1,
+        "unit_price": 1899.0,
+        "cost_price": 1600.0,
+        "category": "电视",
+        "brand": "小米"
+      }
+    ],
+    "purchase_orders": [
+      {
+        "purchase_order_id": "PO202606010001",
+        "supplier_id": 2,
+        "supplier_name": "美的集团",
+        "order_time": "2026-06-01T14:00:00",
+        "expected_date": "2026-06-05",
+        "status": "completed",
+        "total_amount": 10000.0,
+        "remark": "采购美的空调",
+        "received_time": "2026-06-05T10:00:00"
+      },
+      {
+        "purchase_order_id": "PO202606020001",
+        "supplier_id": 1,
+        "supplier_name": "海尔电器有限公司",
+        "order_time": "2026-06-02T10:00:00",
+        "expected_date": "2026-06-06",
+        "status": "completed",
+        "total_amount": 7500.0,
+        "remark": "采购海尔冰箱",
+        "received_time": "2026-06-06T12:20:08.650463"
+      },
+      {
+        "purchase_order_id": "PO202606030001",
+        "supplier_id": 3,
+        "supplier_name": "小米科技有限公司",
+        "order_time": "2026-06-03T15:00:00",
+        "expected_date": "2026-06-08",
+        "status": "completed",
+        "total_amount": 8000.0,
+        "remark": "采购小米电视",
+        "received_time": "2026-06-06T12:20:38.743929"
+      }
+    ],
+    "purchase_order_items": [
+      {
+        "item_id": 1,
+        "purchase_order_id": "PO202606010001",
+        "product_id": 2,
+        "product_name": "美的空调 KFR-35",
+        "quantity": 5,
+        "received_quantity": 5,
+        "unit_price": 2000.0
+      },
+      {
+        "item_id": 2,
+        "purchase_order_id": "PO202606020001",
+        "product_id": 1,
+        "product_name": "海尔冰箱 BCD-216",
+        "quantity": 5,
+        "received_quantity": 3,
+        "unit_price": 1500.0
+      },
+      {
+        "item_id": 3,
+        "purchase_order_id": "PO202606030001",
+        "product_id": 3,
+        "product_name": "小米电视 4A 55寸",
+        "quantity": 5,
+        "received_quantity": 5,
+        "unit_price": 1600.0
+      }
+    ],
+    "inventory_logs": [
+      {
+        "log_id": 1,
+        "product_id": 1,
+        "product_name": "海尔冰箱 BCD-216",
+        "relate_order_id": "SO202606010001",
+        "change_type": "销售出库",
+        "change_qty": -2,
+        "before_quantity": 12,
+        "after_quantity": 10,
+        "operator": "cashier",
+        "operate_time": "2026-06-01T10:35:00",
+        "remark": "销售订单出库"
+      },
+      {
+        "log_id": 2,
+        "product_id": 2,
+        "product_name": "美的空调 KFR-35",
+        "relate_order_id": "PO202606010001",
+        "change_type": "采购入库",
+        "change_qty": 5,
+        "before_quantity": 3,
+        "after_quantity": 8,
+        "operator": "buyer",
+        "operate_time": "2026-06-05T10:05:00",
+        "remark": "采购入库"
+      },
+      {
+        "log_id": 3,
+        "product_id": 1,
+        "product_name": "海尔冰箱 BCD-216",
+        "relate_order_id": "PO202606020001",
+        "change_type": "采购入库",
+        "change_qty": 3,
+        "before_quantity": 10,
+        "after_quantity": 13,
+        "operator": "buyer",
+        "operate_time": "2026-06-05T11:05:00",
+        "remark": "采购入库"
+      },
+      {
+        "log_id": 4,
+        "product_id": 3,
+        "product_name": "小米电视 4A 55寸",
+        "relate_order_id": "PO202606030001",
+        "change_type": "采购入库",
+        "change_qty": 4,
+        "before_quantity": 8,
+        "after_quantity": 12,
+        "operator": "admin",
+        "operate_time": "2026-06-06T12:20:27.957365",
+        "remark": "采购订单PO202606030001入库"
+      },
+      {
+        "log_id": 5,
+        "product_id": 3,
+        "product_name": "小米电视 4A 55寸",
+        "relate_order_id": "PO202606030001",
+        "change_type": "采购入库",
+        "change_qty": 1,
+        "before_quantity": 12,
+        "after_quantity": 13,
+        "operator": "admin",
+        "operate_time": "2026-06-06T12:20:38.740443",
+        "remark": "采购订单PO202606030001入库外观瑕疵"
+      }
+    ],
+    "financial_records": [
+      {
+        "record_id": 1,
+        "type": 1,
+        "type_text": "收入",
+        "amount": 3798.0,
+        "relate_order_id": "SO202606010001",
+        "occur_time": "2026-06-01T10:35:00",
+        "remark": "销售收款"
+      },
+      {
+        "record_id": 2,
+        "type": 2,
+        "type_text": "支出",
+        "amount": 10000.0,
+        "relate_order_id": "PO202606010001",
+        "occur_time": "2026-06-05T10:05:00",
+        "remark": "采购支出"
+      },
+      {
+        "record_id": 3,
+        "type": 1,
+        "type_text": "收入",
+        "amount": 2599.0,
+        "relate_order_id": "SO202606020001",
+        "occur_time": "2026-06-02T14:25:00",
+        "remark": "销售收款"
+      },
+      {
+        "record_id": 4,
+        "type": 1,
+        "type_text": "收入",
+        "amount": 3000.0,
+        "relate_order_id": "PO202606020001",
+        "occur_time": "2026-06-06T12:20:08.650398",
+        "remark": "采购订单PO202606020001退货退款（不合格商品）外观瑕疵"
+      },
+      {
+        "record_id": 5,
+        "type": 2,
+        "type_text": "支出",
+        "amount": 6400.0,
+        "relate_order_id": "PO202606030001",
+        "occur_time": "2026-06-06T12:20:27.961739",
+        "remark": "采购订单PO202606030001支出（合格商品）"
+      },
+      {
+        "record_id": 6,
+        "type": 2,
+        "type_text": "支出",
+        "amount": 1600.0,
+        "relate_order_id": "PO202606030001",
+        "occur_time": "2026-06-06T12:20:38.743883",
+        "remark": "采购订单PO202606030001支出（合格商品）外观瑕疵"
+      }
+    ],
+    "product_edit_logs": [
+      {
+        "log_id": 1,
+        "product_id": 4,
+        "edit_type": "create",
+        "edit_field": null,
+        "old_value": null,
+        "new_value": "{'product_name': '格力电风扇5N-6', 'brand': '格力', 'model': '5N-6', 'category': '其他', 'retail_price': 600, 'purchase_ref_price': 288, 'current_stock': 0, 'threshold': 5, 'unit': '台', 'warehouse': 'A', 'shelf_no': '3', 'status': 1}",
+        "operator": "system",
+        "operate_time": "2026-06-06T12:22:53.620634",
+        "remark": "创建产品"
+      }
+    ]
+  }
+}

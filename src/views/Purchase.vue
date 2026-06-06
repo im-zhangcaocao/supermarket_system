@@ -72,7 +72,7 @@
           </el-table-column>
           <el-table-column label="总金额" width="120">
             <template #default="{ row }">
-              ¥{{ calculateOrderTotal(row.purchase_order_id).toFixed(2) }}
+              ¥{{ (row.total_amount || 0).toFixed(2) }}
             </template>
           </el-table-column>
           <el-table-column label="状态" width="100">
@@ -334,14 +334,34 @@
                 placeholder="搜索供应商名称..."
                 prefix-icon="Search"
                 clearable
-                style="width: 250px"
+                style="width: 250px; margin-right: 10px"
                 @input="handleSupplierSearch"
               />
-              <el-select v-model="supplierSortBy" placeholder="排序方式" style="width: 180px; margin-left: 10px" @change="handleSupplierSort">
-                <el-option label="按准时率排序" value="on_time_rate" />
-                <el-option label="按交付天数排序" value="delivery_days" />
-                <el-option label="按名称排序" value="name" />
+              <el-select v-model="supplierSortBy" placeholder="排序字段" style="width: 140px; margin-right: 10px" @change="handleSupplierSort">
+                <el-option label="供应商ID" value="supplier_id" />
+                <el-option label="供应商名称" value="name" />
+                <el-option label="准时交付率" value="on_time_rate" />
+                <el-option label="平均交付天数" value="delivery_days" />
+                <el-option label="产品合格率" value="quality_rate" />
               </el-select>
+              <el-button-group>
+                <el-button 
+                  :type="supplierSortOrder === 'asc' ? 'primary' : 'default'" 
+                  size="small"
+                  @click="setSupplierSortOrder('asc')"
+                >
+                  <el-icon><ArrowUp /></el-icon>
+                  升序
+                </el-button>
+                <el-button 
+                  :type="supplierSortOrder === 'desc' ? 'primary' : 'default'" 
+                  size="small"
+                  @click="setSupplierSortOrder('desc')"
+                >
+                  <el-icon><ArrowDown /></el-icon>
+                  降序
+                </el-button>
+              </el-button-group>
             </div>
             <el-button type="primary" @click="openSupplierAddDialog">
               添加供应商
@@ -351,24 +371,59 @@
           <el-table :data="displaySupplierList" border stripe style="width: 100%">
             <el-table-column prop="supplier_id" label="供应商ID" width="100" />
             <el-table-column prop="supplier_name" label="供应商名称" width="180" />
-            <el-table-column prop="contact_person" label="联系人" width="120" />
-            <el-table-column prop="contact_phone" label="联系电话" width="150" />
+            <el-table-column prop="contact_person" label="联系人" width="100" />
+            <el-table-column prop="contact_phone" label="联系电话" width="130" />
             <el-table-column prop="address" label="地址" min-width="150" />
-            <el-table-column label="准时率" width="120">
+            <el-table-column label="准时交付率" width="140">
               <template #default="{ row }">
-                <el-progress :percentage="row.on_time_rate || 0" :color="getRateColor(row.on_time_rate)" />
+                <div class="kpi-cell">
+                  <el-progress 
+                    :percentage="row.on_time_rate || 0" 
+                    :color="getRateColor(row.on_time_rate)"
+                    :show-text="false"
+                    stroke-width="8"
+                  />
+                  <span :style="{ color: getRateColor(row.on_time_rate) }">
+                    {{ row.on_time_rate || 0 }}%
+                  </span>
+                </div>
               </template>
             </el-table-column>
-            <el-table-column label="平均交付天数" width="130">
+            <el-table-column prop="average_delivery_days" label="平均交付天数" width="120">
               <template #default="{ row }">
-                <span :style="getDeliveryDaysStyle(row.average_delivery_days)">
+                <span :class="{ 'highlight': row.average_delivery_days > 0 }">
                   {{ row.average_delivery_days || 0 }} 天
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="last_order_date" label="最近采购日期" width="130">
+            <el-table-column prop="last_order_date" label="最近采购日期" width="140">
               <template #default="{ row }">
                 {{ row.last_order_date || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column label="产品合格率" width="140">
+              <template #default="{ row }">
+                <div class="kpi-cell">
+                  <el-progress 
+                    :percentage="row.quality_rate || 0" 
+                    :color="getQualityRateColor(row.quality_rate)"
+                    :show-text="false"
+                    stroke-width="8"
+                  />
+                  <span :style="{ color: getQualityRateColor(row.quality_rate) }">
+                    {{ row.quality_rate || 0 }}%
+                  </span>
+                  <span v-if="row.total_inspected > 0" class="inspected-count">
+                    ({{ row.quality_count }}/{{ row.total_inspected }})
+                  </span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="80">
+              <template #default="{ row }">
+                <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">
+                  {{ row.status === 1 ? '启用' : '禁用' }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column label="操作" width="160" fixed="right">
@@ -390,6 +445,8 @@
               :page-sizes="[10, 20, 50]"
               :total="filteredSupplierList.length"
               layout="total, sizes, prev, pager, next"
+              @size-change="handleSupplierSizeChange"
+              @current-change="handleSupplierPageChange"
             />
           </div>
         </div>
@@ -397,7 +454,7 @@
     </el-tabs>
     
     <!-- 确认收货弹窗 -->
-    <el-dialog v-model="receiptVisible" title="确认收货" width="700px">
+    <el-dialog v-model="receiptVisible" title="确认收货" width="800px">
       <div v-if="receivingOrder">
         <el-descriptions :column="2" border style="margin-bottom: 20px">
           <el-descriptions-item label="采购单号">{{ receivingOrder.purchase_order_id }}</el-descriptions-item>
@@ -408,9 +465,37 @@
           </el-descriptions-item>
         </el-descriptions>
         
+        <!-- 快捷收货操作 -->
+        <el-card class="quick-action-card" shadow="never" style="margin-bottom: 20px">
+          <template #header>
+            <span>快捷收货操作</span>
+          </template>
+          <div class="quick-actions">
+            <div class="action-group">
+              <span class="action-label">快速选择收货状态：</span>
+              <el-radio-group v-model="quickReceiptStatus" class="radio-group">
+                <el-radio label="all">全部收到</el-radio>
+                <el-radio label="partial">部分收到</el-radio>
+                <el-radio label="none">暂未收到</el-radio>
+              </el-radio-group>
+            </div>
+            <div class="action-buttons">
+              <el-button type="primary" plain size="small" @click="selectAllReceived">
+                全选收货
+              </el-button>
+              <el-button type="warning" plain size="small" @click="clearAllReceived">
+                清空数量
+              </el-button>
+              <el-button type="info" plain size="small" @click="fillRemaining">
+                填充剩余数量
+              </el-button>
+            </div>
+          </div>
+        </el-card>
+        
         <el-form label-width="80px">
           <el-form-item label="收货备注">
-            <el-input v-model="receiptRemark" type="textarea" :rows="2" placeholder="请输入收货备注" />
+            <el-input v-model="receiptRemark" type="textarea" :rows="2" placeholder="请输入收货备注（不合格商品必填）" />
           </el-form-item>
         </el-form>
         
@@ -424,21 +509,27 @@
           </el-table-column>
           <el-table-column label="本次实收数量" width="180">
             <template #default="{ row }">
-              <el-input-number
-                v-model="row.received_qty"
-                :min="0"
-                :max="row.quantity - (row.already_received || 0)"
-                size="small"
-                style="width: 100%"
-              />
+              <div class="receipt-qty-input">
+                <el-input-number
+                  v-model="row.received_qty"
+                  :min="0"
+                  :max="row.quantity - (row.already_received || 0)"
+                  :precision="0"
+                  :disabled="row.already_received >= row.quantity"
+                  size="small"
+                  style="width: 100%"
+                  @change="handleQtyChange(row)"
+                  @blur="validateQty(row)"
+                />
+                <span v-if="row.already_received >= row.quantity" class="qty-disabled-tip">
+                  已全部收货
+                </span>
+              </div>
             </template>
           </el-table-column>
-          <el-table-column label="质检状态" width="120">
+          <el-table-column label="质检状态" width="140">
             <template #default="{ row }">
-              <el-select v-model="row.quality_status" size="small" style="width: 100%">
-                <el-option label="合格" value="合格" />
-                <el-option label="不合格" value="不合格" />
-              </el-select>
+              <QualityStatusSelector v-model="row.quality_status" />
             </template>
           </el-table-column>
         </el-table>
@@ -554,6 +645,12 @@
         <el-form-item label="地址" prop="address">
           <el-input v-model="supplierFormData.address" placeholder="请输入地址" />
         </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="supplierFormData.status">
+            <el-radio :label="1">启用</el-radio>
+            <el-radio :label="0">禁用</el-radio>
+          </el-radio-group>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="supplierDialogVisible = false">取消</el-button>
@@ -566,7 +663,9 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { ArrowUp, ArrowDown } from '@element-plus/icons-vue';
 import { useUserStore } from '../stores/user';
+import QualityStatusSelector from '../components/QualityStatusSelector.vue';
 import {
   getPurchaseOrders,
   getSuppliers,
@@ -584,7 +683,7 @@ import {
   cancelReplenishmentAdvice,
   updateSupplier,
   deleteSupplier
-} from '../api/mockApi';
+} from '../api/realApi';
 
 const userStore = useUserStore();
 const isAdmin = computed(() => userStore.role === 'admin');
@@ -605,6 +704,7 @@ const receivingItems = ref([]);
 const receiving = ref(false);
 const overdueCount = ref(0);
 const receiptRemark = ref('');
+const quickReceiptStatus = ref('partial');
 const receiptHistoryVisible = ref(false);
 const receiptDetailVisible = ref(false);
 const currentOrder = ref(null);
@@ -613,7 +713,8 @@ const orderReceipts = ref([]);
 const receiptDetailItems = ref([]);
 
 // 供应商评估相关
-const supplierSortBy = ref('on_time_rate');
+const supplierSortBy = ref('supplier_id');
+const supplierSortOrder = ref('desc');
 
 // 采购建议相关
 const adviceList = ref([]);
@@ -638,7 +739,8 @@ const supplierFormData = reactive({
   supplier_name: '',
   contact_person: '',
   contact_phone: '',
-  address: ''
+  address: '',
+  status: 1
 });
 
 const supplierFormRules = {
@@ -696,12 +798,18 @@ const filteredSupplierList = computed(() => {
   }
   
   // 排序
-  if (supplierSortBy.value === 'on_time_rate') {
-    result = [...result].sort((a, b) => (b.on_time_rate || 0) - (a.on_time_rate || 0));
+  const sortOrder = supplierSortOrder.value === 'asc' ? 1 : -1;
+  
+  if (supplierSortBy.value === 'supplier_id') {
+    result = [...result].sort((a, b) => (a.supplier_id - b.supplier_id) * sortOrder);
+  } else if (supplierSortBy.value === 'on_time_rate') {
+    result = [...result].sort((a, b) => ((b.on_time_rate || 0) - (a.on_time_rate || 0)) * sortOrder);
   } else if (supplierSortBy.value === 'delivery_days') {
-    result = [...result].sort((a, b) => (a.average_delivery_days || 0) - (b.average_delivery_days || 0));
+    result = [...result].sort((a, b) => ((a.average_delivery_days || 0) - (b.average_delivery_days || 0)) * sortOrder);
   } else if (supplierSortBy.value === 'name') {
-    result = [...result].sort((a, b) => a.supplier_name.localeCompare(b.supplier_name));
+    result = [...result].sort((a, b) => a.supplier_name.localeCompare(b.supplier_name) * sortOrder);
+  } else if (supplierSortBy.value === 'quality_rate') {
+    result = [...result].sort((a, b) => ((b.quality_rate || 0) - (a.quality_rate || 0)) * sortOrder);
   }
   
   return result;
@@ -728,12 +836,8 @@ function getStatusText(status) {
   return map[status] || '未知';
 }
 
-function calculateOrderTotal(purchaseOrderId) {
-  const db = JSON.parse(localStorage.getItem('supermarket_db') || '{}');
-  const orderItems = (db.purchase_order_items || []).filter(
-    item => item.purchase_order_id === purchaseOrderId
-  );
-  return orderItems.reduce((sum, item) => sum + (item.unit_price || 0) * (item.quantity || 0), 0);
+function calculateOrderTotal(order) {
+  return order.total_amount || 0;
 }
 
 async function loadOrders() {
@@ -802,29 +906,133 @@ function removeItem(index) {
 }
 
 async function openReceiptDialog(order) {
-  receivingOrder.value = order;
+  console.log('openReceiptDialog called with:', order);
+  
+  if (!order || !order.purchase_order_id) {
+    ElMessage.error('无效的订单信息');
+    return;
+  }
+  
+  receivingOrder.value = { ...order };
   receiptRemark.value = '';
+  quickReceiptStatus.value = 'partial';
   
-  // 获取订单明细
-  const db = JSON.parse(localStorage.getItem('supermarket_db') || '{}');
-  const orderItemsList = (db.purchase_order_items || []).filter(
-    item => item.purchase_order_id === order.purchase_order_id
-  );
-  
-  receivingItems.value = orderItemsList.map(item => {
-    const product = products.value.find(p => p.product_id === item.product_id);
-    return {
+  // 先设置默认数据，确保界面能显示
+  const localOrder = orders.value.find(o => o.purchase_order_id === order.purchase_order_id);
+  if (localOrder && localOrder.items && localOrder.items.length > 0) {
+    receivingItems.value = localOrder.items.map(item => ({
       product_id: item.product_id,
-      product_name: product?.product_name || `产品${item.product_id}`,
+      product_name: item.product_name || `产品${item.product_id}`,
       quantity: item.quantity,
       unit_price: item.unit_price,
-      already_received: item.received_qty || 0,
+      already_received: item.received_quantity || 0,
       received_qty: 0,
       quality_status: '合格'
-    };
-  });
+    }));
+  } else {
+    receivingItems.value = [];
+  }
+  
+  // 获取订单明细（从后端API获取）
+  try {
+    const response = await fetch(`/api/purchase/orders/${order.purchase_order_id}`);
+    const result = await response.json();
+    
+    console.log('API response:', result);
+    
+    if (result.success && result.data.items && result.data.items.length > 0) {
+      receivingItems.value = result.data.items.map(item => {
+        const product = products.value.find(p => p.product_id === item.product_id);
+        return {
+          product_id: item.product_id,
+          product_name: product?.product_name || item.product_name || `产品${item.product_id}`,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          already_received: item.received_quantity || 0,
+          received_qty: 0,
+          quality_status: '合格'
+        };
+      });
+    }
+  } catch (error) {
+    console.error('获取订单明细失败:', error);
+    // 已经有默认数据，这里只需要提示错误
+    ElMessage.warning('获取最新订单明细失败，使用本地缓存数据');
+  }
+  
+  console.log('receivingOrder:', receivingOrder.value);
+  console.log('receivingItems:', receivingItems.value);
   
   receiptVisible.value = true;
+}
+
+function selectAllReceived() {
+  receivingItems.value.forEach(item => {
+    if (item.already_received < item.quantity) {
+      item.received_qty = item.quantity - item.already_received;
+      item.quality_status = '合格';
+    }
+  });
+  quickReceiptStatus.value = 'all';
+}
+
+function clearAllReceived() {
+  receivingItems.value.forEach(item => {
+    item.received_qty = 0;
+  });
+  quickReceiptStatus.value = 'none';
+}
+
+function fillRemaining() {
+  receivingItems.value.forEach(item => {
+    const remaining = item.quantity - item.already_received;
+    if (remaining > 0) {
+      item.received_qty = remaining;
+      item.quality_status = '合格';
+    }
+  });
+  quickReceiptStatus.value = 'all';
+}
+
+watch(quickReceiptStatus, (newStatus) => {
+  if (newStatus === 'all') {
+    selectAllReceived();
+  } else if (newStatus === 'none') {
+    clearAllReceived();
+  }
+});
+
+function handleQtyChange(row) {
+  if (row.received_qty < 0) {
+    row.received_qty = 0;
+    ElMessage.warning('实收数量不能为负数');
+  }
+  const maxQty = row.quantity - (row.already_received || 0);
+  if (row.received_qty > maxQty) {
+    row.received_qty = maxQty;
+    ElMessage.warning(`实收数量不能超过剩余数量 ${maxQty}`);
+  }
+  
+  // 更新快捷状态
+  const hasReceived = receivingItems.value.some(item => item.received_qty > 0);
+  const allReceived = receivingItems.value.every(item => {
+    return item.already_received >= item.quantity || item.received_qty === (item.quantity - item.already_received);
+  });
+  
+  if (!hasReceived) {
+    quickReceiptStatus.value = 'none';
+  } else if (allReceived) {
+    quickReceiptStatus.value = 'all';
+  } else {
+    quickReceiptStatus.value = 'partial';
+  }
+}
+
+function validateQty(row) {
+  if (row.received_qty && !Number.isInteger(row.received_qty)) {
+    row.received_qty = Math.floor(row.received_qty);
+    ElMessage.warning('实收数量必须为整数');
+  }
 }
 
 async function handleReceipt() {
@@ -837,6 +1045,15 @@ async function handleReceipt() {
     return;
   }
   
+  // 验证不合格商品必须填写备注
+  const unqualifiedItems = receivingItems.value.filter(
+    item => item.received_qty > 0 && item.quality_status === '不合格'
+  );
+  if (unqualifiedItems.length > 0 && !receiptRemark.value) {
+    ElMessage.warning('不合格商品需要填写收货备注说明原因');
+    return;
+  }
+  
   receiving.value = true;
   
   try {
@@ -844,7 +1061,7 @@ async function handleReceipt() {
       .filter(item => item.received_qty > 0)
       .map(item => ({
         product_id: item.product_id,
-        quantity: item.received_qty,
+        received_quantity: item.received_qty,
         quality_status: item.quality_status
       }));
     
@@ -991,6 +1208,12 @@ function getDeliveryDaysStyle(days) {
   return { color: '#f56c6c' };
 }
 
+function getQualityRateColor(rate) {
+  if (!rate || rate < 60) return '#f56c6c';
+  if (rate < 80) return '#e6a23c';
+  return '#67c23a';
+}
+
 // 采购建议相关函数
 async function generateAdvice() {
   generatingAdvice.value = true;
@@ -1123,7 +1346,8 @@ function openSupplierEditDialog(row) {
     supplier_name: row.supplier_name,
     contact_person: row.contact_person,
     contact_phone: row.contact_phone,
-    address: row.address
+    address: row.address,
+    status: row.status || 1
   });
   supplierDialogVisible.value = true;
 }
@@ -1133,7 +1357,8 @@ function resetSupplierForm() {
     supplier_name: '',
     contact_person: '',
     contact_phone: '',
-    address: ''
+    address: '',
+    status: 1
   });
   supplierFormRef.value?.clearValidate();
 }
@@ -1185,15 +1410,40 @@ async function handleSupplierDelete(row) {
 }
 
 function handleSupplierSort() {
-  // 排序逻辑已在computed属性中实现
-  // 这里只需要重置分页到第一页
   supplierPage.value = 1;
 }
+
+function setSupplierSortOrder(order) {
+  supplierSortOrder.value = order;
+  supplierPage.value = 1;
+}
+
+function handleSupplierSizeChange() {
+  supplierPage.value = 1;
+}
+
+function handleSupplierPageChange() {}
 </script>
 
 <style scoped>
 .purchase-container {
   padding: 20px;
+}
+
+.kpi-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspected-count {
+  font-size: 12px;
+  color: #909399;
+}
+
+.highlight {
+  color: #67c23a;
+  font-weight: 500;
 }
 
 .page-title {
@@ -1228,6 +1478,53 @@ function handleSupplierSort() {
 
 .create-order-form {
   max-width: 900px;
+}
+
+.receipt-qty-input {
+  position: relative;
+}
+
+.qty-disabled-tip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  color: #909399;
+  pointer-events: none;
+}
+
+.quick-action-card {
+  background: #fafafa;
+}
+
+.quick-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-label {
+  font-size: 14px;
+  color: #606266;
+}
+
+.radio-group {
+  display: flex;
+  gap: 16px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
 }
 
 .form-section {
